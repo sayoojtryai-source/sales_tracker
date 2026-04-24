@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Dashboard</h1>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('export_products') }}">⬇ Products .xlsx</a>
+    <a class="btn btn-ghost" href="{{ url_for('export_sales', scope='all') }}">⬇ Sales .xlsx</a>
+    <a class="btn btn-primary" href="{{ url_for('order_create') }}">+ New Order</a>
+  </div>
+</section>
+
+<section class="widget-grid">
+  <div class="widget">
+    <div class="widget-label">Orders today</div>
+    <div class="widget-value">{{ total_orders_today }}</div>
+    <a class="widget-link" href="{{ url_for('orders_list', scope='today') }}">View today →</a>
+  </div>
+  <div class="widget">
+    <div class="widget-label">Orders past days</div>
+    <div class="widget-value">{{ total_orders_past }}</div>
+    <a class="widget-link" href="{{ url_for('orders_list', scope='past') }}">View past →</a>
+  </div>
+  <div class="widget">
+    <div class="widget-label">Orders all time</div>
+    <div class="widget-value">{{ total_orders_all }}</div>
+    <a class="widget-link" href="{{ url_for('orders_list', scope='all') }}">View all →</a>
+  </div>
+
+  <div class="widget accent">
+    <div class="widget-label">Sales today</div>
+    <div class="widget-value">{{ currency }}{{ '%.2f'|format(sales_today) }}</div>
+    <a class="widget-link" href="{{ url_for('export_sales', scope='today') }}">Export today →</a>
+  </div>
+  <div class="widget accent">
+    <div class="widget-label">Sales past days</div>
+    <div class="widget-value">{{ currency }}{{ '%.2f'|format(sales_past) }}</div>
+    <a class="widget-link" href="{{ url_for('export_sales', scope='past') }}">Export past →</a>
+  </div>
+  <div class="widget accent">
+    <div class="widget-label">Total sales</div>
+    <div class="widget-value">{{ currency }}{{ '%.2f'|format(sales_all) }}</div>
+    <a class="widget-link" href="{{ url_for('export_sales', scope='all') }}">Export all →</a>
+  </div>
+
+  <div class="widget soft">
+    <div class="widget-label">Stock on hand</div>
+    <div class="widget-value">{{ total_stock }}</div>
+    <a class="widget-link" href="{{ url_for('products_list') }}">Manage products →</a>
+  </div>
+</section>
+
+<section class="two-col">
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Available stock</h2>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('product_create') }}">+ Add product</a>
+    </div>
+    {% if products %}
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Product</th><th>Category</th><th class="num">Price</th><th class="num">Qty</th></tr>
+        </thead>
+        <tbody>
+          {% for p in products %}
+          <tr class="{% if p.quantity <= 5 %}row-warn{% endif %}">
+            <td>
+              <a href="{{ url_for('product_edit', product_id=p.id) }}">{{ p.name }}</a>
+              {% if not p.is_active %}<span class="tag tag-muted">inactive</span>{% endif %}
+            </td>
+            <td>{{ p.category }}</td>
+            <td class="num">{{ currency }}{{ '%.2f'|format(p.price_float) }}</td>
+            <td class="num">{{ p.quantity }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="muted">No products yet. <a href="{{ url_for('product_create') }}">Add your first product</a>.</p>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Recent orders</h2>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('orders_list') }}">See all</a>
+    </div>
+    {% if recent_orders %}
+    <ul class="list">
+      {% for o in recent_orders %}
+      <li>
+        <div>
+          <strong><a href="{{ url_for('order_detail', order_id=o.id) }}">Order #{{ o.id }}</a></strong>
+          <span class="muted"> · {{ o.customer_name }}</span>
+        </div>
+        <div class="list-meta">
+          <span>{{ o.created_at.strftime('%d %b, %H:%M') }}</span>
+          <span class="amount">{{ currency }}{{ '%.2f'|format(o.total_float) }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+      <p class="muted">No orders yet. <a href="{{ url_for('order_create') }}">Create the first one</a>.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% if low_stock %}
+<section class="panel warn">
+  <h2>Low stock ({{ low_stock|length }})</h2>
+  <p class="muted">These items are at or below 5 units.</p>
+  <ul class="chips">
+    {% for p in low_stock %}
+      <li><a href="{{ url_for('product_edit', product_id=p.id) }}">{{ p.name }} · {{ p.quantity }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

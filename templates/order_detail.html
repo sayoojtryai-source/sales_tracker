@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Order #{{ order.id }}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('orders_list') }}">← Back</a>
+</section>
+
+<div class="two-col">
+  <div class="panel">
+    <h2>Details</h2>
+    <dl class="kv">
+      <dt>Customer</dt><dd>{{ order.customer_name }}</dd>
+      {% if order.customer_phone %}<dt>Phone</dt><dd>{{ order.customer_phone }}</dd>{% endif %}
+      <dt>Placed</dt><dd>{{ order.created_at.strftime('%d %b %Y, %H:%M') }}</dd>
+      {% if order.notes %}<dt>Notes</dt><dd>{{ order.notes }}</dd>{% endif %}
+    </dl>
+  </div>
+  <div class="panel accent">
+    <h2>Total</h2>
+    <p class="big-amount">{{ currency }}{{ '%.2f'|format(order.total_float) }}</p>
+    <p class="muted">{{ order.items|sum(attribute='quantity') }} items</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Items</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr><th>Product</th><th class="num">Unit price</th><th class="num">Qty</th><th class="num">Line total</th></tr>
+      </thead>
+      <tbody>
+        {% for item in order.items %}
+        <tr>
+          <td>{{ item.product_name }}</td>
+          <td class="num">{{ currency }}{{ '%.2f'|format(item.unit_price|float) }}</td>
+          <td class="num">{{ item.quantity }}</td>
+          <td class="num">{{ currency }}{{ '%.2f'|format(item.line_total|float) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr><th colspan="3" class="num">Total</th><th class="num amount">{{ currency }}{{ '%.2f'|format(order.total_float) }}</th></tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

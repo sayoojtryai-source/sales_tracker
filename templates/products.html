@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Products</h1>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('export_products') }}">⬇ Export .xlsx</a>
+    <a class="btn btn-primary" href="{{ url_for('product_create') }}">+ Add product</a>
+  </div>
+</section>
+
+{% if products %}
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th class="num">Price</th>
+        <th class="num">Quantity</th>
+        <th>Status</th>
+        <th class="num">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr class="{% if p.quantity <= 5 %}row-warn{% endif %}">
+        <td><strong>{{ p.name }}</strong>{% if p.description %}<div class="muted tiny">{{ p.description }}</div>{% endif %}</td>
+        <td>{{ p.category }}</td>
+        <td class="num">{{ currency }}{{ '%.2f'|format(p.price_float) }}</td>
+        <td class="num">{{ p.quantity }}</td>
+        <td>
+          {% if p.is_active %}<span class="tag tag-ok">Active</span>{% else %}<span class="tag tag-muted">Inactive</span>{% endif %}
+        </td>
+        <td class="num actions">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('product_edit', product_id=p.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('product_delete', product_id=p.id) }}" onsubmit="return confirm('Delete {{ p.name }}?');" style="display:inline">
+            <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <p class="muted">No products yet. <a href="{{ url_for('product_create') }}">Add your first product</a>.</p>
+{% endif %}
+{% endblock %}
