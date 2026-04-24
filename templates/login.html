@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">🧁</div>
+    <h1>caek admin</h1>
+    <p class="muted">Sign in to manage products and orders.</p>
+    <form method="post" class="stack">
+      <label>Username
+        <input name="username" autocomplete="username" required autofocus />
+      </label>
+      <label>Password
+        <input name="password" type="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" class="btn btn-primary">Sign in</button>
+    </form>
+    <p class="muted tiny">Default: admin / admin123 — change after first login.</p>
+  </div>
+</div>
+{% endblock %}

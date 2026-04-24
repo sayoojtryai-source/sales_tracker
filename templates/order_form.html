@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}New order{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>New order</h1>
+  <a class="btn btn-ghost" href="{{ url_for('orders_list') }}">← Back</a>
+</section>
+
+{% if not products %}
+  <div class="panel warn">
+    <p>No active products with stock. <a href="{{ url_for('product_create') }}">Add one first</a>.</p>
+  </div>
+{% else %}
+<form method="post" class="card stack">
+  <div class="form-grid">
+    <label>Customer name
+      <input name="customer_name" placeholder="Walk-in" />
+    </label>
+    <label>Phone (optional)
+      <input name="customer_phone" inputmode="tel" placeholder="+91..." />
+    </label>
+    <label class="full">Notes (optional)
+      <textarea name="notes" rows="2" placeholder="e.g. Pickup at 5pm"></textarea>
+    </label>
+  </div>
+
+  <h2>Items</h2>
+  <div id="items" class="stack">
+    <div class="item-row">
+      <select name="product_id" required onchange="updateTotal()">
+        <option value="">Select product</option>
+        {% for p in products %}
+          <option value="{{ p.id }}" data-price="{{ p.price_float }}" data-stock="{{ p.quantity }}">
+            {{ p.name }} — {{ currency }}{{ '%.2f'|format(p.price_float) }} ({{ p.quantity }} in stock)
+          </option>
+        {% endfor %}
+      </select>
+      <input type="number" name="quantity" min="1" value="1" required onchange="updateTotal()" oninput="updateTotal()" />
+      <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove(); updateTotal();">✕</button>
+    </div>
+  </div>
+
+  <button type="button" class="btn btn-ghost" onclick="addRow()">+ Add another item</button>
+
+  <div class="total-row">
+    <span>Estimated total</span>
+    <strong id="running-total">{{ currency }}0.00</strong>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">Create order</button>
+    <a class="btn btn-ghost" href="{{ url_for('orders_list') }}">Cancel</a>
+  </div>
+</form>
+
+<template id="row-template">
+  <div class="item-row">
+    <select name="product_id" required onchange="updateTotal()">
+      <option value="">Select product</option>
+      {% for p in products %}
+        <option value="{{ p.id }}" data-price="{{ p.price_float }}" data-stock="{{ p.quantity }}">
+          {{ p.name }} — {{ currency }}{{ '%.2f'|format(p.price_float) }} ({{ p.quantity }} in stock)
+        </option>
+      {% endfor %}
+    </select>
+    <input type="number" name="quantity" min="1" value="1" required onchange="updateTotal()" oninput="updateTotal()" />
+    <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove(); updateTotal();">✕</button>
+  </div>
+</template>
+
+<script>
+  function addRow() {
+    const tmpl = document.getElementById('row-template');
+    const clone = tmpl.content.cloneNode(true);
+    document.getElementById('items').appendChild(clone);
+  }
+  function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-row').forEach(row => {
+      const sel = row.querySelector('select');
+      const qtyInput = row.querySelector('input[type="number"]');
+      const opt = sel.options[sel.selectedIndex];
+      const price = opt ? parseFloat(opt.dataset.price || 0) : 0;
+      const qty = parseInt(qtyInput.value || 0, 10);
+      if (price && qty > 0) total += price * qty;
+    });
+    document.getElementById('running-total').textContent = '{{ currency }}' + total.toFixed(2);
+  }
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}Edit {{ product.name }}{% else %}New product{% endif %}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{% if product %}Edit product{% else %}Add product{% endif %}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('products_list') }}">← Back</a>
+</section>
+
+<form method="post" class="card stack form-grid">
+  <label>Name
+    <input name="name" required value="{{ product.name if product else '' }}" placeholder="e.g. Classic Chocolate Brownie" />
+  </label>
+  <label>Category
+    <select name="category">
+      {% set current_cat = product.category if product else 'Cakes' %}
+      {% for cat in ['Cakes', 'Brownies', 'Cookies', 'Other'] %}
+        <option value="{{ cat }}" {% if cat == current_cat %}selected{% endif %}>{{ cat }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Price ({{ currency }} INR)
+    <input name="price" type="number" step="0.01" min="0" required value="{{ '%.2f'|format(product.price_float) if product else '' }}" />
+  </label>
+  <label>Quantity in stock
+    <input name="quantity" type="number" min="0" required value="{{ product.quantity if product else 0 }}" />
+  </label>
+  <label class="full">Description (optional)
+    <textarea name="description" rows="2" placeholder="Short description">{{ product.description if product else '' }}</textarea>
+  </label>
+  <label class="checkbox full">
+    <input type="checkbox" name="is_active" {% if not product or product.is_active %}checked{% endif %} />
+    Available for sale
+  </label>
+  <div class="full actions">
+    <button class="btn btn-primary" type="submit">{% if product %}Save changes{% else %}Add product{% endif %}</button>
+    <a class="btn btn-ghost" href="{{ url_for('products_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Orders</h1>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('export_sales', scope=scope) }}">⬇ Export .xlsx</a>
+    <a class="btn btn-primary" href="{{ url_for('order_create') }}">+ New Order</a>
+  </div>
+</section>
+
+<div class="tabs">
+  <a class="tab {% if scope == 'all' %}active{% endif %}" href="{{ url_for('orders_list', scope='all') }}">All</a>
+  <a class="tab {% if scope == 'today' %}active{% endif %}" href="{{ url_for('orders_list', scope='today') }}">Today</a>
+  <a class="tab {% if scope == 'past' %}active{% endif %}" href="{{ url_for('orders_list', scope='past') }}">Past days</a>
+</div>
+
+{% if orders %}
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Customer</th>
+        <th class="num">Items</th>
+        <th class="num">Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>#{{ o.id }}</td>
+        <td>{{ o.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+        <td>{{ o.customer_name }}{% if o.customer_phone %} <span class="muted tiny">· {{ o.customer_phone }}</span>{% endif %}</td>
+        <td class="num">{{ o.items|sum(attribute='quantity') }}</td>
+        <td class="num amount">{{ currency }}{{ '%.2f'|format(o.total_float) }}</td>
+        <td class="num"><a class="btn btn-ghost btn-sm" href="{{ url_for('order_detail', order_id=o.id) }}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <p class="muted">No orders found for this view.</p>
+{% endif %}
+{% endblock %}
