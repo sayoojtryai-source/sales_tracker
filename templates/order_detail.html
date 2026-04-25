@@ -6,8 +6,9 @@
   <div class="page-actions">
     <a class="btn btn-ghost" href="{{ url_for('orders_list') }}">← Back</a>
     <a class="btn btn-ghost" href="{{ url_for('order_edit', order_id=order.id) }}">Edit</a>
+    {% set total_str = '%.2f'|format(order.total_float) %}
     <form method="post" action="{{ url_for('order_delete', order_id=order.id) }}" style="display:inline"
-          onsubmit="return confirm('Delete Order #{{ order.id }} ({{ currency }}{{ \'%.2f\'|format(order.total_float) }})? Stock will be restored.')">
+          onsubmit="return confirm('Delete Order #{{ order.id }} ({{ currency }}{{ total_str }})? Stock will be restored.')">
       <button class="btn btn-danger" type="submit">Delete</button>
     </form>
   </div>
