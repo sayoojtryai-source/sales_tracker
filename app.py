@@ -22,10 +22,10 @@ from flask_login import (
     logout_user,
 )
 from openpyxl import Workbook
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from config import Config
-from models import Order, OrderItem, Product, User, db
+from models import Customer, Order, OrderItem, Product, User, db
 
 
 def create_app(config_class: type = Config) -> Flask:
@@ -55,9 +55,21 @@ def create_app(config_class: type = Config) -> Flask:
 
     with app.app_context():
         db.create_all()
+        _run_migrations()
         _ensure_default_admin()
 
     return app
+
+
+def _run_migrations() -> None:
+    with db.engine.connect() as conn:
+        result = conn.execute(text("PRAGMA table_info(orders)"))
+        cols = [row[1] for row in result]
+        if "customer_id" not in cols:
+            conn.execute(text(
+                "ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id)"
+            ))
+            conn.commit()
 
 
 def _ensure_default_admin() -> None:
@@ -323,6 +335,14 @@ def register_routes(app: Flask) -> None:
                     product.quantity -= qty  # decrement stock
                 order.total_amount = total
                 db.session.add(order)
+                if customer_phone:
+                    cust = Customer.query.filter_by(phone=customer_phone).first()
+                    if cust is None:
+                        cust = Customer(name=customer_name, phone=customer_phone)
+                        db.session.add(cust)
+                    elif customer_name != "Walk-in":
+                        cust.name = customer_name
+                    order.customer = cust
                 db.session.commit()
                 flash(
                     f"Order #{order.id} created. Total {app.config['CURRENCY_SYMBOL']}{total:.2f}.",
@@ -342,6 +362,132 @@ def register_routes(app: Flask) -> None:
     def order_detail(order_id: int):
         order = db.session.get(Order, order_id) or abort(404)
         return render_template("order_detail.html", order=order)
+
+    @app.route("/orders/<int:order_id>/edit", methods=["GET", "POST"])
+    @login_required
+    def order_edit(order_id: int):
+        order = db.session.get(Order, order_id) or abort(404)
+        if request.method == "POST":
+            try:
+                order.customer_name = request.form.get("customer_name", "").strip() or "Walk-in"
+                order.customer_phone = request.form.get("customer_phone", "").strip()
+                order.notes = request.form.get("notes", "").strip()
+                db.session.commit()
+                flash(f"Order #{order.id} updated.", "success")
+                return redirect(url_for("order_detail", order_id=order.id))
+            except Exception as exc:
+                db.session.rollback()
+                flash(f"Could not update order: {exc}", "danger")
+        return render_template("order_edit.html", order=order)
+
+    @app.route("/orders/<int:order_id>/delete", methods=["POST"])
+    @login_required
+    def order_delete(order_id: int):
+        order = db.session.get(Order, order_id) or abort(404)
+        restored = 0
+        for item in order.items:
+            if item.product is not None:
+                item.product.quantity += item.quantity
+                restored += item.quantity
+        db.session.delete(order)
+        db.session.commit()
+        flash(
+            f"Order #{order_id} deleted. {restored} unit(s) returned to stock.",
+            "success",
+        )
+        return redirect(url_for("orders_list"))
+
+    # ----- Customers -----
+    @app.route("/customers")
+    @login_required
+    def customers_list():
+        rows = (
+            db.session.query(
+                Customer,
+                func.count(Order.id).label("order_count"),
+                func.coalesce(func.sum(Order.total_amount), 0).label("total_spent"),
+            )
+            .outerjoin(Order, Order.customer_id == Customer.id)
+            .group_by(Customer.id)
+            .order_by(Customer.name.asc())
+            .all()
+        )
+        return render_template("customers.html", rows=rows)
+
+    @app.route("/customers/new", methods=["GET", "POST"])
+    @login_required
+    def customer_create():
+        if request.method == "POST":
+            try:
+                name = request.form.get("name", "").strip()
+                phone = request.form.get("phone", "").strip()
+                if not name:
+                    raise ValueError("Name is required.")
+                if not phone:
+                    raise ValueError("Phone is required.")
+                if Customer.query.filter_by(phone=phone).first():
+                    raise ValueError(f"A customer with phone {phone} already exists.")
+                cust = Customer(
+                    name=name,
+                    phone=phone,
+                    email=request.form.get("email", "").strip(),
+                    address=request.form.get("address", "").strip(),
+                    notes=request.form.get("notes", "").strip(),
+                )
+                db.session.add(cust)
+                db.session.commit()
+                flash(f"Customer '{name}' added.", "success")
+                return redirect(url_for("customers_list"))
+            except ValueError as exc:
+                db.session.rollback()
+                flash(str(exc), "danger")
+        return render_template("customer_form.html", customer=None)
+
+    @app.route("/customers/<int:customer_id>")
+    @login_required
+    def customer_detail(customer_id: int):
+        cust = db.session.get(Customer, customer_id) or abort(404)
+        orders = (
+            Order.query.filter_by(customer_id=customer_id)
+            .order_by(Order.created_at.desc())
+            .all()
+        )
+        total_spent = sum(o.total_float for o in orders)
+        return render_template(
+            "customer_detail.html", customer=cust, orders=orders, total_spent=total_spent
+        )
+
+    @app.route("/export/customers.xlsx")
+    @login_required
+    def export_customers():
+        rows = (
+            db.session.query(
+                Customer,
+                func.count(Order.id).label("order_count"),
+                func.coalesce(func.sum(Order.total_amount), 0).label("total_spent"),
+            )
+            .outerjoin(Order, Order.customer_id == Customer.id)
+            .group_by(Customer.id)
+            .order_by(Customer.name.asc())
+            .all()
+        )
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Customers"
+        ws.append(["ID", "Name", "Phone", "Email", "Address", "Notes", "Joined", "Total Orders", "Total Spent (INR)"])
+        for cust, order_count, total_spent in rows:
+            ws.append([
+                cust.id,
+                cust.name,
+                cust.phone,
+                cust.email or "",
+                cust.address or "",
+                cust.notes or "",
+                cust.created_at.strftime("%Y-%m-%d") if cust.created_at else "",
+                order_count,
+                float(total_spent or 0),
+            ])
+        return _send_workbook(wb, f"caek-customers-{date.today().isoformat()}.xlsx")
 
     # ----- Exports -----
     @app.route("/export/products.xlsx")

@@ -19,6 +19,7 @@
       <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Dashboard</a>
       <a href="{{ url_for('products_list') }}" class="{% if request.endpoint and 'product' in request.endpoint %}active{% endif %}">Products</a>
       <a href="{{ url_for('orders_list') }}" class="{% if request.endpoint and 'order' in request.endpoint %}active{% endif %}">Orders</a>
+      <a href="{{ url_for('customers_list') }}" class="{% if request.endpoint and 'customer' in request.endpoint %}active{% endif %}">Customers</a>
       <a href="{{ url_for('order_create') }}" class="cta">+ New Order</a>
       <span class="user-chip">👤 {{ current_user.username }}</span>
       <a href="{{ url_for('logout') }}" class="logout">Logout</a>

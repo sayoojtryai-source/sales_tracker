@@ -3,7 +3,14 @@
 {% block content %}
 <section class="page-head">
   <h1>Order #{{ order.id }}</h1>
-  <a class="btn btn-ghost" href="{{ url_for('orders_list') }}">← Back</a>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('orders_list') }}">← Back</a>
+    <a class="btn btn-ghost" href="{{ url_for('order_edit', order_id=order.id) }}">Edit</a>
+    <form method="post" action="{{ url_for('order_delete', order_id=order.id) }}" style="display:inline"
+          onsubmit="return confirm('Delete Order #{{ order.id }} ({{ currency }}{{ \'%.2f\'|format(order.total_float) }})? Stock will be restored.')">
+      <button class="btn btn-danger" type="submit">Delete</button>
+    </form>
+  </div>
 </section>
 
 <div class="two-col">
@@ -14,6 +21,9 @@
       {% if order.customer_phone %}<dt>Phone</dt><dd>{{ order.customer_phone }}</dd>{% endif %}
       <dt>Placed</dt><dd>{{ order.created_at.strftime('%d %b %Y, %H:%M') }}</dd>
       {% if order.notes %}<dt>Notes</dt><dd>{{ order.notes }}</dd>{% endif %}
+      {% if order.customer %}
+      <dt>Customer record</dt><dd><a href="{{ url_for('customer_detail', customer_id=order.customer.id) }}">{{ order.customer.name }}</a></dd>
+      {% endif %}
     </dl>
   </div>
   <div class="panel accent">

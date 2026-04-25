@@ -43,6 +43,20 @@ class Product(db.Model):
         return float(self.price)
 
 
+class Customer(db.Model):
+    __tablename__ = "customers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), default="")
+    address = db.Column(db.String(300), default="")
+    notes = db.Column(db.String(500), default="")
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    orders = db.relationship("Order", back_populates="customer")
+
+
 class Order(db.Model):
     __tablename__ = "orders"
 
@@ -52,10 +66,12 @@ class Order(db.Model):
     notes = db.Column(db.String(500), default="")
     total_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     created_at = db.Column(db.DateTime, default=datetime.now, index=True)
+    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=True, index=True)
 
     items = db.relationship(
         "OrderItem", back_populates="order", cascade="all, delete-orphan"
     )
+    customer = db.relationship("Customer", back_populates="orders")
 
     @property
     def order_date(self) -> date:
