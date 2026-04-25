@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
@@ -33,8 +33,8 @@ class Product(db.Model):
     quantity = db.Column(db.Integer, nullable=False, default=0)
     description = db.Column(db.String(500), default="")
     is_active = db.Column(db.Boolean, default=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     order_items = db.relationship("OrderItem", back_populates="product")
 
@@ -51,7 +51,7 @@ class Order(db.Model):
     customer_phone = db.Column(db.String(20), default="")
     notes = db.Column(db.String(500), default="")
     total_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.now, index=True)
 
     items = db.relationship(
         "OrderItem", back_populates="order", cascade="all, delete-orphan"
