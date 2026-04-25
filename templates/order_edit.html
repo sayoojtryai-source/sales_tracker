@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Edit Order #{{ order.id }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Edit Order #{{ order.id }}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('order_detail', order_id=order.id) }}">← Back</a>
+</section>
+
+<div class="panel warn">
+  <p class="muted">Item quantities cannot be changed here. To adjust stock, edit products directly.</p>
+</div>
+
+<form method="post" class="card stack">
+  <div class="form-grid">
+    <label>Customer name
+      <input name="customer_name" value="{{ order.customer_name }}" placeholder="Walk-in" />
+    </label>
+    <label>Phone (optional)
+      <input name="customer_phone" inputmode="tel" value="{{ order.customer_phone or '' }}" placeholder="+91..." />
+    </label>
+    <label class="full">Notes (optional)
+      <textarea name="notes" rows="2">{{ order.notes or '' }}</textarea>
+    </label>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">Save changes</button>
+    <a class="btn btn-ghost" href="{{ url_for('order_detail', order_id=order.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Customers</h1>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ url_for('export_customers') }}">⬇ Export .xlsx</a>
+    <a class="btn btn-primary" href="{{ url_for('customer_create') }}">+ Add Customer</a>
+  </div>
+</section>
+
+{% if rows %}
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th class="num">Orders</th>
+        <th class="num">Total Spent</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cust, order_count, total_spent in rows %}
+      <tr>
+        <td><a href="{{ url_for('customer_detail', customer_id=cust.id) }}">{{ cust.name }}</a></td>
+        <td>{{ cust.phone }}</td>
+        <td>{{ cust.email or '—' }}</td>
+        <td class="num">{{ order_count }}</td>
+        <td class="num amount">{{ currency }}{{ '%.2f'|format(total_spent|float) }}</td>
+        <td class="num"><a class="btn btn-ghost btn-sm" href="{{ url_for('customer_detail', customer_id=cust.id) }}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <p class="muted">No customers yet. Customer records are created automatically when an order is placed with a phone number.</p>
+{% endif %}
+{% endblock %}

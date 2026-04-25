@@ -36,7 +36,10 @@
         <td>{{ o.customer_name }}{% if o.customer_phone %} <span class="muted tiny">· {{ o.customer_phone }}</span>{% endif %}</td>
         <td class="num">{{ o.items|sum(attribute='quantity') }}</td>
         <td class="num amount">{{ currency }}{{ '%.2f'|format(o.total_float) }}</td>
-        <td class="num"><a class="btn btn-ghost btn-sm" href="{{ url_for('order_detail', order_id=o.id) }}">View</a></td>
+        <td class="num" style="display:flex;gap:.35rem;justify-content:flex-end">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('order_detail', order_id=o.id) }}">View</a>
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('order_edit', order_id=o.id) }}">Edit</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
