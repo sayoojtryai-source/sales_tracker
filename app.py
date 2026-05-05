@@ -489,6 +489,39 @@ def register_routes(app: Flask) -> None:
             ])
         return _send_workbook(wb, f"caek-customers-{date.today().isoformat()}.xlsx")
 
+    # ----- Settings -----
+    @app.route("/settings")
+    @login_required
+    def settings():
+        counts = {
+            "products": Product.query.count(),
+            "orders": Order.query.count(),
+            "order_items": OrderItem.query.count(),
+            "customers": Customer.query.count(),
+        }
+        return render_template("settings.html", counts=counts)
+
+    @app.route("/settings/reset", methods=["POST"])
+    @login_required
+    def settings_reset():
+        if request.form.get("confirm", "") != "DELETE ALL DATA":
+            flash("Confirmation phrase did not match. Nothing was deleted.", "danger")
+            return redirect(url_for("settings"))
+        try:
+            OrderItem.query.delete()
+            Order.query.delete()
+            Customer.query.delete()
+            Product.query.delete()
+            db.session.commit()
+            flash(
+                "All products, orders, and customers have been deleted. Admin accounts preserved.",
+                "success",
+            )
+        except Exception as exc:
+            db.session.rollback()
+            flash(f"Could not reset data: {exc}", "danger")
+        return redirect(url_for("dashboard"))
+
     # ----- Exports -----
     @app.route("/export/products.xlsx")
     @login_required

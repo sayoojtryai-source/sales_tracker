@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Settings</h1>
+</section>
+
+<div class="panel warn">
+  <h2>Danger Zone</h2>
+  <p class="muted">
+    Permanently delete <strong>all products, orders, customers, and line items</strong> from the database.
+    Admin accounts are preserved so you can still log in. This action cannot be undone.
+  </p>
+
+  <ul class="list" style="margin-bottom:1rem">
+    <li><span>Products</span><span class="amount">{{ counts.products }}</span></li>
+    <li><span>Orders</span><span class="amount">{{ counts.orders }}</span></li>
+    <li><span>Order line items</span><span class="amount">{{ counts.order_items }}</span></li>
+    <li><span>Customers</span><span class="amount">{{ counts.customers }}</span></li>
+  </ul>
+
+  <form method="post" action="{{ url_for('settings_reset') }}" class="stack"
+        onsubmit="return confirm('This will permanently delete every product, order, and customer. Continue?');">
+    <label>Type <code>DELETE ALL DATA</code> to confirm
+      <input id="confirm-input" name="confirm" autocomplete="off" placeholder="DELETE ALL DATA" />
+    </label>
+    <div class="actions">
+      <button id="reset-btn" class="btn btn-danger" type="submit" disabled>Delete all data</button>
+      <a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  (function () {
+    var input = document.getElementById('confirm-input');
+    var btn = document.getElementById('reset-btn');
+    input.addEventListener('input', function () {
+      btn.disabled = input.value !== 'DELETE ALL DATA';
+    });
+  })();
+</script>
+{% endblock %}
