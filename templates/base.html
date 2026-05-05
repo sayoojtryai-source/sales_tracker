@@ -22,6 +22,7 @@
       <a href="{{ url_for('customers_list') }}" class="{% if request.endpoint and 'customer' in request.endpoint %}active{% endif %}">Customers</a>
       <a href="{{ url_for('order_create') }}" class="cta">+ New Order</a>
       <span class="user-chip">👤 {{ current_user.username }}</span>
+      <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}">Settings</a>
       <a href="{{ url_for('logout') }}" class="logout">Logout</a>
     </nav>
     {% endif %}
